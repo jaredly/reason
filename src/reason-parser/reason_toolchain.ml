@@ -84,8 +84,14 @@ open Ast_404
 open Location
 open Lexing
 
+module OCaml_target = OCaml_402;
+
+module From_target = Convert(OCaml_target)(OCaml_404)
+module To_target = Convert(OCaml_404)(OCaml_target)
+
 module From_current = Convert(OCaml_current)(OCaml_404)
 module To_current = Convert(OCaml_404)(OCaml_current)
+
 
 module S = MenhirLib.General (* Streams *)
 

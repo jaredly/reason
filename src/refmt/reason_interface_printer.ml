@@ -50,8 +50,8 @@ let print printtype filename parsedAsML output_chan output_formatter =
   )
   | `Binary -> fun (ast, _) -> (
       Ast_io.to_channel output_chan filename
-        (Ast_io.Intf ((module OCaml_current),
-                      Reason_toolchain.To_current.copy_signature ast))
+        (Ast_io.Intf ((module Reason_toolchain.OCaml_target),
+                      Reason_toolchain.To_target.copy_signature ast))
   )
   | `AST -> fun (ast, _) -> (
       Printast.interface output_formatter

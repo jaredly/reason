@@ -51,8 +51,8 @@ let print printtype filename parsedAsML output_chan output_formatter =
   )
   | `Binary -> fun (ast, _) -> (
      Ast_io.to_channel output_chan filename
-       (Ast_io.Impl ((module OCaml_current),
-                     Reason_toolchain.To_current.copy_structure ast))
+       (Ast_io.Impl ((module Reason_toolchain.OCaml_target),
+                     Reason_toolchain.To_target.copy_structure ast))
   )
   | `AST -> fun (ast, _) -> (
     Printast.implementation output_formatter
