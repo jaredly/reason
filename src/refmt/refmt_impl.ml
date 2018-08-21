@@ -95,7 +95,7 @@ let refmt
 let top_level_info =
   let doc = "Reason's Parser & Pretty-printer" in
   let man = [`S "DESCRIPTION"; `P "refmt lets you format Reason files, parse them, and convert them between OCaml syntax and Reason syntax."] in
-let version = "Reason " ^ Package.version ^ " @ " ^ Package.git_short_version
+let version = "Reason " ^ Package.version ^ " @ " ^ Package.git_short_version ^ " (compiled for OCaml version " ^ Reason_target.version_name ^ ")"
   in
   Term.info "refmt" ~version ~doc ~man
 
