@@ -84,10 +84,8 @@ open Ast_404
 open Location
 open Lexing
 
-module OCaml_target = Reason_target.OCaml_version
-
-module From_target = Convert(OCaml_target)(OCaml_404)
-module To_target = Convert(OCaml_404)(OCaml_target)
+module From_target = Convert(Reason_target.OCaml_version)(OCaml_404)
+module To_target = Convert(OCaml_404)(Reason_target.OCaml_version)
 
 module From_current = Convert(OCaml_current)(OCaml_404)
 module To_current = Convert(OCaml_404)(OCaml_current)
