@@ -5,6 +5,8 @@ set -e
 # - pack the whole repo into a single refmt file for vendoring into bucklescript
 # - generate the js version of refmt for web usage
 
+export ast_version=402
+
 THIS_SCRIPT_DIR="$(cd "$( dirname "$0" )" && pwd)"
 
 # echo "**This script is switching you to ocaml 4.02.3 for the subsequent bspacking. Please switch back to your own version afterward. Thanks!**\n"
@@ -22,7 +24,6 @@ echo 'echo $cur__root' >> _get_root
 # generated from the script ./downloadSomeDependencies.sh
 # ocamlMigrateParseTreeTargetDir="$THIS_SCRIPT_DIR/ocaml-migrate-parsetree/_build/default/src"
 ocamlMigrateParseTreeTargetDir=`cat _get_root | bash`/_build/default/src
-echo "OMP " $ocamlMigrateParseTreeTargetDir
 rm _get_root
 cd -
 
@@ -45,13 +46,13 @@ rm -f "$REFMT_CLOSURE.*"
 rm -rf $buildDir
 mkdir $buildDir
 
+echo "👉 running jbuilder"
 pushd $THIS_SCRIPT_DIR
 # rebuild the project in case it was stale
-# make clean -C ../
-# make pre_release -C ../
-# make build -C ../
+make pre_release -C ../
+make build -C ../
 
-# Get some omp goodness
+# Get OMP source from esy
 mkdir $THIS_SCRIPT_DIR/build/omp
 cp $ocamlMigrateParseTreeTargetDir/*.ml $THIS_SCRIPT_DIR/build/omp
 for i in $(ls build/omp/*.pp.ml); do
@@ -59,17 +60,18 @@ newname=$(basename $i | sed 's/\.pp\././')
 target=${THIS_SCRIPT_DIR}/build/omp/${newname}
 mv $i ${target}
 done;
-
 ocamlMigrateParseTreeTargetDir=$THIS_SCRIPT_DIR/build/omp
 
-if [ ! -f $THIS_SCRIPT_DIR/bspack.exe ];
-  # Build ourselves a bspack.exe
+# Build ourselves a bspack.exe
+if [ ! -f $THIS_SCRIPT_DIR/bspack.exe ]; then
+  echo "👉 building bspack.exe"
   cd $THIS_SCRIPT_DIR/bin
   ocamlopt -g -w -40-30-3 ./ext_basic_hash_stubs.c unix.cmxa ./bspack.ml -o ../bspack.exe
   cd -
-fi;
+fi
 
 build_js_api () {
+  echo "👉 bspacking the js api"
   # =============
   # Now, second task. Packing the repo again but with a new entry file, for JS
   # consumption
@@ -109,10 +111,12 @@ build_js_api () {
 
   # for the js bundle
   node ./testRefmtJs.js
+  echo
   echo "✅ finished building refmt js api"
 }
 
 build_refmt () {
+  echo "👉 bspacking refmt"
 
   # =============
   # last step for the first task , we're done generating the single file that'll
@@ -137,8 +141,10 @@ build_refmt () {
     -bs-MD \
     -o "$REFMT_BINARY.ml"
 
+  echo "👉 compiling refmt"
   # build REFMT_BINARY into an actual binary too. For testing purposes at the end
   ocamlc -g -no-alias-deps -w -40-3 -I +compiler-libs ocamlcommon.cma "$REFMT_BINARY.ml" -o "$REFMT_BINARY.byte"
+  echo "👉 opt compiling refmt"
   ocamlopt -g -no-alias-deps -w -40-3 -I +compiler-libs ocamlcommon.cmxa "$REFMT_BINARY.ml" -o "$REFMT_BINARY.exe"
 
   # small integration test to check that the process went well
