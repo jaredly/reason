@@ -1,0 +1,2 @@
+module OCaml_version = Migrate_parsetree.OCaml_@ast_version@
+let version_name = "@ast_version@"

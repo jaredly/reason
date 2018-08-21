@@ -59,6 +59,8 @@ SUBSTS:=$(ROOT_DIR)/pkg/substs
 esy-prepublish: build clean-tests pre_release
 	node ./scripts/esy-prepublish.js
 
+# e.g. 406
+ast_version ?= $(shell ocamlc -version | sed 's/4\.0/40/' | sed 's/\..*//')
 # For OPAM
 pre_release:
 ifndef version
@@ -67,6 +69,7 @@ endif
 	export git_version="$(shell git rev-parse --verify HEAD)"; \
 	export git_short_version="$(shell git rev-parse --short HEAD)"; \
 	$(SUBSTS) $(ROOT_DIR)/src/refmt/package.ml.in
+	ast_version=$(ast_version) $(SUBSTS) $(ROOT_DIR)/src/reason-parser/reason_target.ml.in
 
 .PHONY: pre_release
 
