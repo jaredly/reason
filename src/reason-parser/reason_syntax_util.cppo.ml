@@ -421,6 +421,34 @@ let remove_stylistic_attrs_mapper_maker super =
 let remove_stylistic_attrs_mapper =
   remove_stylistic_attrs_mapper_maker Ast_mapper.default_mapper
 
+let backport_letopt_mapper_maker super =
+  let open Ast_408 in
+  let open Ast_mapper in
+{ super with
+  expr = begin fun mapper expr ->
+    match expr.pexp_desc with
+    | Pexp_letop { let_ = {
+      pbop_op = {txt; loc};
+      pbop_pat;
+      pbop_exp;
+      pbop_loc;
+    }; ands=_; body } ->
+      {expr with pexp_desc = (Pexp_apply ((Ast_helper.Exp.ident ~loc:loc (Location.mkloc (Longident.Lident txt) loc)),  [
+        (Nolabel, pbop_exp);
+        (Nolabel, Ast_helper.Exp.fun_ ~loc:pbop_loc Nolabel None pbop_pat body)
+      ]))}
+    | _ -> super.expr mapper expr
+  end;
+}
+
+#if OCAML_VERSION >= (4, 8, 0)
+(** noop under 4.08 *)
+let backport_letopt_mapper = Ast_mapper.default_mapper
+#else
+let backport_letopt_mapper =
+  backport_letopt_mapper_maker Ast_mapper.default_mapper
+#endif
+
 (** escape_stars_slashes_mapper escapes all stars and slashes in an AST *)
 let escape_stars_slashes_mapper =
   let escape_stars_slashes str =
