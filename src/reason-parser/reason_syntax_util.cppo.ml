@@ -429,13 +429,26 @@ let backport_letopt_mapper_maker super =
     match expr.pexp_desc with
     | Pexp_letop { let_ = {
       pbop_op = {txt; loc};
-      pbop_pat;
-      pbop_exp;
       pbop_loc;
-    }; ands=_; body } ->
+    } as let_; ands; body } ->
+      let rec loop ands =
+        match ands with
+        | [] -> assert false
+        | {pbop_op; pbop_pat; pbop_exp}::[] -> (pbop_pat, pbop_exp, pbop_op)
+        | {pbop_op; pbop_pat; pbop_exp; pbop_loc}::rest -> 
+        let (pattern, expr, op) = loop rest in
+        (
+          Ast_helper.Pat.tuple ~loc:pbop_loc [pbop_pat; pattern],
+          Ast_helper.Exp.apply ~loc:pbop_loc
+            (Ast_helper.Exp.ident ~loc:op.loc (Location.mkloc (Longident.Lident op.txt) op.loc))
+            [(Nolabel, pbop_exp); (Nolabel, expr)],
+          pbop_op
+        )
+      in
+      let (pattern, expr, _) = loop (let_::ands) in
       {expr with pexp_desc = (Pexp_apply ((Ast_helper.Exp.ident ~loc:loc (Location.mkloc (Longident.Lident txt) loc)),  [
-        (Nolabel, pbop_exp);
-        (Nolabel, Ast_helper.Exp.fun_ ~loc:pbop_loc Nolabel None pbop_pat body)
+        (Nolabel, expr);
+        (Nolabel, Ast_helper.Exp.fun_ ~loc:pbop_loc Nolabel None pattern body)
       ]))}
     | _ -> super.expr mapper expr
   end;
