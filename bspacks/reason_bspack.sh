@@ -39,6 +39,32 @@ mkdir $buildDir
 
 pushd $THIS_SCRIPT_DIR
 
+setup_output_dir () {
+  outputDir="$THIS_SCRIPT_DIR/output/`esy ocamlc -version`"
+  rm -rf $outputDir
+  mkdir -p $outputDir
+}
+
+build_reason_406 () {
+  # rebuild the project in case it was stale
+  cd ..
+  git checkout esy.json esy.lock
+  # We need 4.02 for js_of_ocaml (it has a stack overflow otherwise :/)
+  # sed -i '' 's/"ocaml": "~4.6.0"/"ocaml": "~4.2.3004"/' ./esy.json
+  if [ -z "$version" ];then
+    export version=$(grep -m1 version ./esy.json | sed -E 's/.+([0-9]\.[0-9]\.[0-9]).+/\1/')-$(date +%Y.%m.%d)
+  fi
+  make pre_release
+  esy
+  setup_output_dir
+  # reasonEsyTargetDir=`esy echo '#{self.target_dir}'`
+  reasonEsyTargetDir=`pwd`/_build
+  ls $reasonEsyTargetDir
+  git checkout esy.json esy.lock
+  cd -
+}
+
+
 build_reason_402 () {
   # rebuild the project in case it was stale
   cd ..
@@ -49,7 +75,10 @@ build_reason_402 () {
   fi
   make pre_release
   esy
-  reasonEsyTargetDir=`esy echo '#{self.target_dir}'`
+  setup_output_dir
+  # reasonEsyTargetDir=`esy echo '#{self.target_dir}'`
+  reasonEsyTargetDir=`pwd`/_build
+  ls $reasonEsyTargetDir
   git checkout esy.json esy.lock
   cd -
 }
@@ -66,15 +95,16 @@ get_ppx_derivers () {
 
 # Get OMP source from esy
 get_omp () {
+  rm -rf $ocamlMigrateParseTreeTargetDir
   mkdir $ocamlMigrateParseTreeTargetDir
 
   ompSource=`esy show-omp-dir`/_build/default/src
 
   cp $ompSource/*.ml $ocamlMigrateParseTreeTargetDir
   for i in $(ls build/omp/*.pp.ml); do
-  newname=$(basename $i | sed 's/\.pp\././')
-  target=${THIS_SCRIPT_DIR}/build/omp/${newname}
-  mv $i ${target}
+    newname=$(basename $i | sed 's/\.pp\././')
+    target=${THIS_SCRIPT_DIR}/build/omp/${newname}
+    mv $i ${target}
   done;
 }
 
@@ -146,7 +176,8 @@ build_js_api () {
   # for the js bundle
   node ./testRefmtJs.js
   echo
-  echo "✅ finished building refmt js api"
+  echo "✅ finished building refmt js api, copying to $outputDir"
+  cp $REFMT_API.ml $REFMT_CLOSURE.js $ouptutDir
 }
 
 build_refmt () {
@@ -188,12 +219,32 @@ build_refmt () {
   # small integration test to check that the process went well
   # for the native binary
   echo "let f = (a) => 1" | "$REFMT_BINARY.byte" --parse re --print ml
-  echo "✅ finished building refmt binary"
+  echo "✅ finished building refmt binary, copying to $outputDir"
+  cp $REFMT_BINARY.byte $REFMT_BINARY.exe $REFMT_BINARY.ml $outputDir
 }
 
-build_reason_402
-build_bspack
-get_ppx_derivers
-get_omp
-build_refmt
-build_js_api
+reset_version () {
+  git checkout $THIS_SCRIPT_DIR/../src/refmt/package.ml
+}
+
+build_402 () {
+  build_reason_402
+  build_bspack
+  get_ppx_derivers
+  get_omp
+  build_refmt
+  build_js_api
+  reset_version
+}
+
+build_406 () {
+  build_reason_406
+  build_bspack
+  get_ppx_derivers
+  get_omp
+  build_refmt
+  reset_version
+}
+
+
+build_402
