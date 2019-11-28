@@ -2,6 +2,7 @@ const refmt = require('../refmt')
 console.log(refmt)
 
 console.log(refmt.printRE(refmt.parseRE(`let f = (a) => a + 1; print_int(f(5))`)))
+console.log(refmt.printRE(refmt.parseRE(`{let.x y = z; a}`)))
 console.log(refmt.printREI(refmt.parseREI(`let f: (~a: string) => int`)))
 console.log(refmt.printML(refmt.parseML(`let f a = a + 1 print_int @@ f 5`)))
 console.log(refmt.printMLI(refmt.parseMLI(`val f : a:string -> int`)))
