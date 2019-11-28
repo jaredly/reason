@@ -446,7 +446,7 @@ let backport_letopt_mapper_maker super =
         )
       in
       let (pattern, expr, _) = loop (let_::ands) in
-      {expr with pexp_desc = (Pexp_apply ((Ast_helper.Exp.ident ~loc:loc (Location.mkloc (Longident.Lident txt) loc)),  [
+      super.expr mapper {expr with pexp_desc = (Pexp_apply ((Ast_helper.Exp.ident ~loc:loc (Location.mkloc (Longident.Lident txt) loc)),  [
         (Nolabel, expr);
         (Nolabel, Ast_helper.Exp.fun_ ~loc:pbop_loc Nolabel None pattern body)
       ]))}
