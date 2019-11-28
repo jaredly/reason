@@ -1,3 +1,4 @@
+#!/bin/bash
 # exit if anything goes wrong
 set -e
 
@@ -42,9 +43,9 @@ build_reason_402 () {
   # rebuild the project in case it was stale
   cd ..
   # We need 4.02 for js_of_ocaml (it has a stack overflow otherwise :/)
-  sed -i 's/"ocaml": "~4.6.0"/"ocaml": "~4.2.3004"/' ./esy.json
+  sed -i '' 's/"ocaml": "~4.6.0"/"ocaml": "~4.2.3004"/' ./esy.json
   if [ -z "$version" ];then
-    export version=$(grep version ./esy.json | sed -E 's/.+([0-9]\.[0-9]\.[0-9]).+/\1/')-$(date +%Y.%m.%d)
+    export version=$(grep -m1 version ./esy.json | sed -E 's/.+([0-9]\.[0-9]\.[0-9]).+/\1/')-$(date +%Y.%m.%d)
   fi
   make pre_release
   esy
@@ -89,7 +90,6 @@ build_bspack () {
 
 build_js_api () {
   echo "👉 bspacking the js api"
-  set -x
   # =============
   # Now, second task. Packing the repo again but with a new entry file, for JS
   # consumption
@@ -115,7 +115,9 @@ build_js_api () {
     -o "$REFMT_API.ml"
 
   # This hack is required since the emitted code by bspack somehow adds 	
-	sed -i'.bak' -e 's/Migrate_parsetree__Ast_404/Migrate_parsetree.Ast_404/' build/*.ml
+	sed -i'' -e 's/Migrate_parsetree__Ast_404/Migrate_parsetree.Ast_404/' build/*.ml
+	sed -i'' -e 's/Migrate_parsetree__Ast_408/Migrate_parsetree.Ast_408/' build/*.ml
+  echo replaced
   
   # the `-no-alias-deps` flag is important. Not sure why...
   # remove warning 40 caused by ocaml-migrate-parsetree
@@ -174,7 +176,8 @@ build_refmt () {
     -o "$REFMT_BINARY.ml"
 
 	# This hack is required since the emitted code by bspack somehow adds 	
-	sed -i'.bak' -e 's/Migrate_parsetree__Ast_404/Migrate_parsetree.Ast_404/' build/*.ml
+	sed -i'' -e 's/Migrate_parsetree__Ast_404/Migrate_parsetree.Ast_404/' build/*.ml
+	sed -i'' -e 's/Migrate_parsetree__Ast_408/Migrate_parsetree.Ast_408/' build/*.ml
   
   echo "👉 compiling refmt"
   # build REFMT_BINARY into an actual binary too. For testing purposes at the end
