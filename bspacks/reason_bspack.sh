@@ -39,11 +39,20 @@ mkdir $buildDir
 
 pushd $THIS_SCRIPT_DIR
 
+get_version_from_esy_json() {
+  if [ -z "$version" ];then
+    export version=$(grep -m1 version ./esy.json | sed -E 's/.+([0-9]\.[0-9]\.[0-9]).+/\1/')-$(date +%Y.%m.%d)
+  fi
+}
+
 setup_output_dir () {
   outputDir="$THIS_SCRIPT_DIR/output/`esy ocamlc -version`"
   rm -rf $outputDir
   mkdir -p $outputDir
 }
+
+# set_ocaml_version_402 () {
+# }
 
 build_reason_406 () {
   # rebuild the project in case it was stale
@@ -51,9 +60,6 @@ build_reason_406 () {
   git checkout esy.json esy.lock
   # We need 4.02 for js_of_ocaml (it has a stack overflow otherwise :/)
   # sed -i '' 's/"ocaml": "~4.6.0"/"ocaml": "~4.2.3004"/' ./esy.json
-  if [ -z "$version" ];then
-    export version=$(grep -m1 version ./esy.json | sed -E 's/.+([0-9]\.[0-9]\.[0-9]).+/\1/')-$(date +%Y.%m.%d)
-  fi
   make pre_release
   esy
   setup_output_dir
@@ -85,6 +91,7 @@ build_reason_402 () {
 
 # Get ppx_derivers source from esy
 get_ppx_derivers () {
+  rm -rf $ppxDeriversTargetDir
   mkdir $ppxDeriversTargetDir
 
   ppxDeriversSource=`esy show-ppx_derivers-dir`/_build/default/src
@@ -177,6 +184,7 @@ build_js_api () {
   node ./testRefmtJs.js
   echo
   echo "✅ finished building refmt js api, copying to $outputDir"
+  echo $REFMT_API.ml $REFMT_CLOSURE.js $ouptutDir
   cp $REFMT_API.ml $REFMT_CLOSURE.js $ouptutDir
 }
 
@@ -246,5 +254,5 @@ build_406 () {
   reset_version
 }
 
-
-build_402
+get_version_from_esy_json
+build_406

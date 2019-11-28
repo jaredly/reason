@@ -14,7 +14,7 @@
     "show-ppx_derivers-dir": "echo #{@opam/ppx_derivers.target_dir}"
   },
   "devDependencies": {
-    "ocaml": "~4.2.3004"
+    "ocaml": "~4.6.0"
   },
   "esy": {
     "build": [
